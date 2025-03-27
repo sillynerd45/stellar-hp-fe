@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 
 dev
+env
+lib/core/dependencies_injection.dart
+lib/core/stellar/smart_contract_component/contract_tx_handler.dart

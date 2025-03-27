@@ -1,6 +1,6 @@
-fresh: dartanalyze
+clean: dart_analyze
 
-clean:
+flutter_clean:
 	@echo "------------------------------"
 	@echo "Flutter CLEAN"
 	@flutter clean
@@ -9,7 +9,7 @@ clean:
         exit 1; \
     fi
 
-pubget: clean
+pub_get: flutter_clean
 	@echo " "
 	@echo "Flutter PUB GET"
 	@flutter pub get
@@ -18,7 +18,7 @@ pubget: clean
         exit 1; \
     fi
 
-dartanalyze: pubget
+dart_analyze: pub_get
 	@echo " "
 	@echo "Dart ANALYZE"
 	@dart analyze
@@ -27,4 +27,4 @@ dartanalyze: pubget
     fi
 	@echo "------------------------------"
 
-.PHONY: fresh clean pubget dartanalyze
+.PHONY: clean flutter_clean pub_get dart_analyze

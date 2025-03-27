@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:stellar_hp_fe/core/core.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  await DependencyInjection.init(
+    rpc: const String.fromEnvironment('rpc'),
+    contractAddress: const String.fromEnvironment('contractAddress'),
+  );
+
+  runApp(const StellarHpApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class StellarHpApp extends StatelessWidget {
+  const StellarHpApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +38,18 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  void _incrementCounter() {
+  void _incrementCounter() async {
     setState(() {
       _counter++;
     });
+
+    // TODO: PLATO
+    // await getIt<HpSignUp>().invoke(publicKey: 'GB3NWHOV6POCYEVH6B74V5KM6A22T4J36Z5EMEHHGP6SGTMCD7SEVQGM');
+    await getIt<HpGetLogHash>().invoke(publicKey: 'GB3NWHOV6POCYEVH6B74V5KM6A22T4J36Z5EMEHHGP6SGTMCD7SEVQGM');
+
+    // TODO: ARES
+    // await getIt<HpSignUp>().invoke(publicKey: 'GAN2QRLHTKDIFZYU3GSQ3AYSJDGF6H6KUWCUPH2PXJGDVVKONGZXPPNG');
+    await getIt<HpGetLogHash>().invoke(publicKey: 'GAN2QRLHTKDIFZYU3GSQ3AYSJDGF6H6KUWCUPH2PXJGDVVKONGZXPPNG');
   }
 
   @override

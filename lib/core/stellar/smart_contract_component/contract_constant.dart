@@ -1,0 +1,1 @@
+const appDefaultTxFee = 100_000_000;
