@@ -1,34 +1,31 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 
-class HpSignUp {
+class HpReadLog {
   final String fn;
 
-  HpSignUp({
+  HpReadLog({
     required this.fn,
   });
 
-  Future<bool> invoke({
-    required String publicKey,
-    required UserProfile userProfile,
+  Future<void> invoke({
+    required String seed,
   }) async {
+    String publicKey = KeyPair.fromSecretSeed(seed).accountId;
     debugPrint('Invoke $fn for $publicKey');
 
     AccountResponse account = await getIt<StellarNetwork>().stellar.accounts.account(publicKey);
 
-    // encrypt profile
-    String plainProfileText = jsonEncode(userProfile.toJson());
-    String encryptedProfileText =
-        getIt<HashService>().encrypt(plainText: plainProfileText, seed: getIt<UserIdService>().getSeed());
+    int year = 2025;
+    int month = 3;
+    int date = 28;
 
     List<XdrSCVal> params = [
       XdrSCVal.forAccountAddress(publicKey),
-      XdrSCVal.forString(encryptedProfileText),
-      XdrSCVal.forU32(userProfile.accountType!.typeId),
-      XdrSCVal.forString(userProfile.logHash!),
+      XdrSCVal.forU32(year),
+      XdrSCVal.forU32(month),
+      XdrSCVal.forU32(date),
     ];
 
     InvokeHostFunctionOperation operation = getIt<SorobanSmartContract>().buildOperation(fn, params);
@@ -43,7 +40,7 @@ class HpSignUp {
         debugPrint('preflight: $error');
         debugPrint('---------------------------------------------------------');
       }
-      return false;
+      return;
     }
 
     List<SimulateTransactionResult> preflight = simulateResponse.results ?? [];
@@ -52,20 +49,41 @@ class HpSignUp {
         debugPrint('preflight: empty result');
         debugPrint('---------------------------------------------------------');
       }
-      return false;
+      return;
     }
 
     debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
-    int preflightResult = preflight.first.resultValue!.u32!.uint32;
-    debugPrint('preflight result: $preflightResult');
-
-    GetTransactionResponse? getTxResponse =
-        await getIt<ContractTxHandler>().signAndSubmit(account, transaction, simulateResponse, publicKey);
-    if (getTxResponse == null || getTxResponse.status != GetTransactionResponse.STATUS_SUCCESS) return false;
-    int result = getTxResponse.getResultValue()!.u32!.uint32;
-    debugPrint('getTxResponse result: $result');
+    // String preflightResult = preflight.first.resultValue!.str!;
+    // debugPrint('preflight result: $preflightResult');
     debugPrint('---------------------------------------------------------');
 
-    return true;
+    for (XdrSCMapEntry m in preflight.first.resultValue!.map!) {
+      if (m.key.u32 != null && m.val.vec != null) {
+        debugPrint('u32: ${m.key.u32!.uint32}');
+        for (XdrSCVal data in m.val.vec!) {
+          debugPrint('${data.str}');
+          String text = getIt<HashService>().decrypt(encryptedText: data.str!, seed: seed);
+          debugPrint(text);
+        }
+      }
+
+      // if (v.key.sym == null) continue;
+      // if (v.key.sym == 'status' && v.val.vec != null) {
+      //   status = (v.val.vec?.first.sym ?? '').getStatus();
+      // }
+      // if (v.key.sym == 'cow_data' && v.val.vec != null) {
+      //   for (XdrSCVal data in v.val.vec!) {
+      //     CowData cow = await getCowData(data.map!);
+      //     cowData.add(cow);
+      //   }
+      // }
+      // if (v.key.sym == 'ownership' && v.val.vec != null) {
+      //   for (XdrSCVal data in v.val.vec!) {
+      //     ownershipData.add(data.str.toString());
+      //   }
+      // }
+    }
+
+    debugPrint('---------------------------------------------------------');
   }
 }

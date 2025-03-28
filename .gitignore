@@ -46,5 +46,4 @@ app.*.map.json
 
 dev
 env
-lib/core/dependencies_injection.dart
-lib/core/stellar/smart_contract_component/contract_tx_handler.dart
+lib/screen/splash_screen.dart

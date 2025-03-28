@@ -9,7 +9,7 @@ class HpGetLogHash {
     required this.fn,
   });
 
-  Future<void> invoke({
+  Future<bool> invoke({
     required String publicKey,
   }) async {
     debugPrint('Invoke $fn for $publicKey');
@@ -32,7 +32,7 @@ class HpGetLogHash {
         debugPrint('preflight: $error');
         debugPrint('---------------------------------------------------------');
       }
-      return;
+      return false;
     }
 
     List<SimulateTransactionResult> preflight = simulateResponse.results ?? [];
@@ -41,12 +41,14 @@ class HpGetLogHash {
         debugPrint('preflight: empty result');
         debugPrint('---------------------------------------------------------');
       }
-      return;
+      return false;
     }
 
     debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
     String preflightResult = preflight.first.resultValue!.str!;
     debugPrint('preflight result: $preflightResult');
     debugPrint('---------------------------------------------------------');
+
+    return true;
   }
 }
