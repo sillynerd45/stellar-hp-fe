@@ -94,7 +94,11 @@ class DatabaseService {
     try {
       // check Health Logs Last Update from Local Storage
       Map<String, YearlyHealthLogs>? healthLogs = await getIt<DatabaseService>().loadUserHealthLogsFromLocalStorage();
+
+      // TODO: [ IMPORTANT ] here fetch data from soroban
+
       // TODO: check if data in Soroban is more updated than Local Storage
+
       return healthLogs;
     } catch (e, s) {
       if (kDebugMode) debugPrint('loadUserHealthLogs $e\n$s');
@@ -136,6 +140,15 @@ class DatabaseService {
     } catch (e, s) {
       if (kDebugMode) debugPrint('saveProfileUpdateAtToLocalStorage $e\n$s');
       return false;
+    }
+  }
+
+  Future<UserProfile?> getUserProfileDataFromContract() async {
+    try {
+      return await getIt<HpGetProfile>().invoke(publicKey: getIt<UserIdService>().getPublicKey());
+    } catch (e, s) {
+      if (kDebugMode) debugPrint('getUserProfileDataFromContract $e\n$s');
+      return null;
     }
   }
 }

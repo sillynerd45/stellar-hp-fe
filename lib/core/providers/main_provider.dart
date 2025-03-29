@@ -24,7 +24,7 @@ class MainProvider extends ChangeNotifier {
   bool isHealthLogDecryptionInProgress = false;
   bool isHealthReportDecryptionInProgress = false;
 
-  void setUserProfile(UserProfile profile) {
+  void setUserProfile(UserProfile? profile) {
     userProfile = profile;
   }
 
@@ -136,27 +136,6 @@ class MainProvider extends ChangeNotifier {
       if (kDebugMode) debugPrint('signingOut $e\n$e');
       return false;
     }
-  }
-
-  Map<String, dynamic> getHealthLogsForReport(DateTime dateTime) {
-    Map<String, dynamic> result = {};
-
-    String year = dateTime.year.toString();
-    YearlyHealthLogs yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs latestMonthData = getMonthlyData(dateTime, yearlyData);
-
-    DateTime previousDateTime = dateTime.subtract(Duration(days: dateTime.day + 1));
-    year = previousDateTime.year.toString();
-    yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs previousMonthData = getMonthlyData(previousDateTime, yearlyData);
-
-    String latestMonthName = DateFormat('MMMM').format(dateTime).toLowerCase();
-    result.addEntries({latestMonthName: latestMonthData.toJson()}.entries);
-
-    String previousMonthName = DateFormat('MMMM').format(previousDateTime).toLowerCase();
-    result.addEntries({previousMonthName: previousMonthData.toJson()}.entries);
-
-    return result;
   }
 
   DailyHealthLogs getSetDailyHealthLogs(DateTime dateTime) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 import 'package:stellar_hp_fe/widgets/widgets.dart';
@@ -432,9 +433,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                       }
                       context.read<MainProvider>().setUserProfile(userProfile);
 
-                      // TODO: enable this
-                      // go to dashboard
-                      // GoRouter.of(context).popAllAndPushReplaced(NavRoute.dashboard);
+                      // go to home
+                      GoRouter.of(context).popAllAndPushReplaced(NavRoute.home);
                     },
                   ),
                 );

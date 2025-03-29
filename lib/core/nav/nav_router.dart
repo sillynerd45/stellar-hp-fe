@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellar_hp_fe/core/core.dart';
+import 'package:stellar_hp_fe/screen/home_screen.dart';
 import 'package:stellar_hp_fe/screen/screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   routes: <GoRoute>[
     GoRoute(
-      path: "/",
+      path: NavRoute.splash,
       pageBuilder: (BuildContext context, GoRouterState state) {
         return customTransitionPage(state, const SplashScreen());
+      },
+    ),
+    GoRoute(
+      path: NavRoute.home,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return customTransitionPage(state, const HomeScreen());
       },
     ),
     GoRoute(
@@ -24,7 +31,46 @@ final GoRouter appRouter = GoRouter(
         return customTransitionPage(state, const CreateProfileScreen());
       },
     ),
+    GoRoute(
+      path: NavRoute.bodyTemperatureLog,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        final data = state.extra! as Map<String, dynamic>;
+        return customTransitionPage(
+            state,
+            BodyTemperatureLogScreen(
+                chosenDailyHealthLogs: data['chosenDailyHealthLogs'], chosenDate: data['chosenDate']));
+      },
+    ),
+    GoRoute(
+      path: NavRoute.bloodPressureLog,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        final data = state.extra! as Map<String, dynamic>;
+        return customTransitionPage(
+            state,
+            BloodPressureLogScreen(
+                chosenDailyHealthLogs: data['chosenDailyHealthLogs'], chosenDate: data['chosenDate']));
+      },
+    ),
+    GoRoute(
+      path: NavRoute.medicineLog,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        final data = state.extra! as Map<String, dynamic>;
+        return customTransitionPage(state,
+            MedicineLogScreen(chosenDailyHealthLogs: data['chosenDailyHealthLogs'], chosenDate: data['chosenDate']));
+      },
+    ),
+    GoRoute(
+      path: NavRoute.symptomLog,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        final data = state.extra! as Map<String, dynamic>;
+        return customTransitionPage(state,
+            SymptomLogScreen(chosenDailyHealthLogs: data['chosenDailyHealthLogs'], chosenDate: data['chosenDate']));
+      },
+    ),
   ],
+  errorPageBuilder: (BuildContext context, GoRouterState state) {
+    return customTransitionPage(state, const SplashScreen());
+  },
 );
 
 CustomTransitionPage<void> customTransitionPage(GoRouterState state, Widget screen) {

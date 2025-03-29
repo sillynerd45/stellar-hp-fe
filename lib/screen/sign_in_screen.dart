@@ -97,7 +97,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                               // TODO: check user profile in soroban
                               // TODO: invoke SMART CONTRACT get_log_hash here
-                              // TODO: if no log hash found then redirect user to : context.push(NavRoute.createProfileFirst);
+                              // TODO: if no log hash found then redirect user to : context.push(NavRoute.createProfile);
 
                               bool userExist =
                                   await getIt<HpGetLogHash>().invoke(publicKey: getIt<UserIdService>().getPublicKey());
@@ -105,15 +105,15 @@ class _SignInScreenState extends State<SignInScreen> {
                               debugPrint('userExist : $userExist');
 
                               if (userExist) {
-                                // await loadAndSetUserData(context, getIt<UserIdService>().getPublicKey());
-                                // if (!context.mounted) return;
-                                // context.pushReplacement(NavRoute.dashboard);
+                                await loadAndSetUserData(context, getIt<UserIdService>().getPublicKey());
+                                if (!context.mounted) return;
+                                context.pushReplacement(NavRoute.home);
                               } else {
                                 context.push(NavRoute.createProfile);
                               }
 
                               // TODO: if the profile exist, load user data
-                              // TODO: then redirect to : context.pushReplacement(NavRoute.dashboard);
+                              // TODO: then redirect to : context.pushReplacement(NavRoute.home);
 
                               isLoggingIn.value = false;
                             },
@@ -130,6 +130,10 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> loadAndSetUserData(BuildContext context, String publicKey) async {
+    // load user profile
+    UserProfile? userProfile = await getIt<DatabaseService>().getUserProfileDataFromContract();
+    getIt<MainProvider>().setUserProfile(userProfile);
+
     // load and setup user health logs data
     Map<String, YearlyHealthLogs>? userHealthLogs = await getIt<DatabaseService>().loadUserHealthLogs(publicKey);
     if (!context.mounted) return;
