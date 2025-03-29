@@ -40,8 +40,11 @@ class DatabaseService {
     DateTime chosenLogTime,
     DailyHealthLogs dailyData,
   ) async {
-    // TODO: invoke SMART CONTRACT insert-log here
-    return true;
+    return await getIt<HpInsertLog>().invoke(
+      publicKey: getIt<UserIdService>().getPublicKey(),
+      chosenLogTime: chosenLogTime,
+      dailyData: dailyData,
+    );
   }
 
   Future<bool> updateDailyLogToSoroban(
@@ -92,14 +95,9 @@ class DatabaseService {
 
   Future<Map<String, YearlyHealthLogs>?> loadUserHealthLogs(String publicKey) async {
     try {
-      // check Health Logs Last Update from Local Storage
-      Map<String, YearlyHealthLogs>? healthLogs = await getIt<DatabaseService>().loadUserHealthLogsFromLocalStorage();
-
-      // TODO: [ IMPORTANT ] here fetch data from soroban
-
-      // TODO: check if data in Soroban is more updated than Local Storage
-
-      return healthLogs;
+      // read user health log from contract
+      List<DailyHealthLogs> dailyLogs = await getIt<HpReadAllLog>().invoke(publicKey: getIt<UserIdService>().getPublicKey());
+      return getIt<MainProvider>().organizeDailyLogs(dailyLogs);
     } catch (e, s) {
       if (kDebugMode) debugPrint('loadUserHealthLogs $e\n$s');
       return null;

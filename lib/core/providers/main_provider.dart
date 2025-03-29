@@ -544,4 +544,40 @@ class MainProvider extends ChangeNotifier {
     }
     return monthlyData;
   }
+
+  Map<String, YearlyHealthLogs> organizeDailyLogs(List<DailyHealthLogs> dailyLogs) {
+    Map<String, YearlyHealthLogs> healthMap = {};
+
+    for (DailyHealthLogs dailyLog in dailyLogs) {
+      int? epochTimestamp = _getTimestamp(dailyLog);
+      if (epochTimestamp == null) continue;
+
+      DateTime chosenLogTime = DateTime.fromMillisecondsSinceEpoch(epochTimestamp);
+      String year = chosenLogTime.year.toString();
+
+      // get monthly and yearly data
+      YearlyHealthLogs yearlyData = healthMap[year] ?? YearlyHealthLogs.fromJson({});
+      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData);
+
+      // update monthly and yearly data
+      monthlyData = updateMonthlyData(chosenLogTime, monthlyData, dailyLog);
+      yearlyData = updateYearlyData(chosenLogTime, yearlyData, monthlyData);
+      healthMap[year] = yearlyData;
+    }
+
+    return healthMap;
+  }
+
+  int? _getTimestamp(DailyHealthLogs log) {
+    if (log.bodyTemperature.isNotEmpty) {
+      return log.bodyTemperature.first.epochTimestamp;
+    } else if (log.bloodPressure.isNotEmpty) {
+      return log.bloodPressure.first.epochTimestamp;
+    } else if (log.symptom.isNotEmpty) {
+      return log.symptom.first.epochTimestamp;
+    } else if (log.medicine.isNotEmpty) {
+      return log.medicine.first.epochTimestamp;
+    }
+    return null;
+  }
 }

@@ -46,4 +46,3 @@ app.*.map.json
 
 dev
 env
-lib/screen/splash_screen.dart

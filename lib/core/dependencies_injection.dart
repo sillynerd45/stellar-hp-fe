@@ -37,9 +37,9 @@ class DependencyInjection {
     // Smart Contract Function
     getIt.registerLazySingleton(() => HpSignUp(fn: 'sign_up'));
     getIt.registerLazySingleton(() => HpGetLogHash(fn: 'get_log_hash'));
-    getIt.registerLazySingleton(() => HpReadLog(fn: 'read_log'));
     getIt.registerLazySingleton(() => HpInsertLog(fn: 'insert_log'));
     getIt.registerLazySingleton(() => HpGetProfile(fn: 'get_profile'));
+    getIt.registerLazySingleton(() => HpReadAllLog(fn: 'read_all_log'));
 
     // Smart Contract Component
     getIt.registerLazySingleton(() => ContractTxHandler());

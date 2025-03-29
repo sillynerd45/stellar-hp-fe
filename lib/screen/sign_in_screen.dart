@@ -95,14 +95,9 @@ class _SignInScreenState extends State<SignInScreen> {
                               if (isLoggingIn.value) return;
                               isLoggingIn.value = true;
 
-                              // TODO: check user profile in soroban
-                              // TODO: invoke SMART CONTRACT get_log_hash here
-                              // TODO: if no log hash found then redirect user to : context.push(NavRoute.createProfile);
-
                               bool userExist =
                                   await getIt<HpGetLogHash>().invoke(publicKey: getIt<UserIdService>().getPublicKey());
                               if (!context.mounted) return;
-                              debugPrint('userExist : $userExist');
 
                               if (userExist) {
                                 await loadAndSetUserData(context, getIt<UserIdService>().getPublicKey());
@@ -111,9 +106,6 @@ class _SignInScreenState extends State<SignInScreen> {
                               } else {
                                 context.push(NavRoute.createProfile);
                               }
-
-                              // TODO: if the profile exist, load user data
-                              // TODO: then redirect to : context.pushReplacement(NavRoute.home);
 
                               isLoggingIn.value = false;
                             },

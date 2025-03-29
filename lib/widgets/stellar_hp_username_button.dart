@@ -27,7 +27,7 @@ class StellarHpUsernameButton extends StatelessWidget {
           decoration: underline ? TextDecoration.underline : TextDecoration.none,
         ),
       ),
-      onPressed: (){},
+      onPressed: () {},
       child: Text(text),
     );
   }

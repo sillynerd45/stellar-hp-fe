@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
@@ -9,20 +11,23 @@ class HpInsertLog {
     required this.fn,
   });
 
-  Future<void> invoke({
-    required String logValue,
-    required String seed,
+  Future<bool> invoke({
+    required String publicKey,
+    required DateTime chosenLogTime,
+    required DailyHealthLogs dailyData,
   }) async {
-    String publicKey = KeyPair.fromSecretSeed(seed).accountId;
     debugPrint('Invoke $fn for $publicKey');
 
     AccountResponse account = await getIt<StellarNetwork>().stellar.accounts.account(publicKey);
 
-    int year = 2025;
-    int month = 3;
-    int date = 28;
-    int logType = 3;
-    String encryptedLogValue = getIt<HashService>().encrypt(plainText: logValue, seed: seed);
+    // encrypt log value
+    String plainLogValue = jsonEncode(dailyData.toJson());
+    String encryptedLogValue =
+        getIt<HashService>().encrypt(plainText: plainLogValue, seed: getIt<UserIdService>().getSeed());
+
+    int year = chosenLogTime.year;
+    int month = chosenLogTime.month;
+    int date = chosenLogTime.day;
     String yearHash = getIt<HashService>().generate(publicKey: publicKey);
     String monthHash = getIt<HashService>().generate(publicKey: publicKey);
     String dateHash = getIt<HashService>().generate(publicKey: publicKey);
@@ -32,7 +37,6 @@ class HpInsertLog {
       XdrSCVal.forU32(year),
       XdrSCVal.forU32(month),
       XdrSCVal.forU32(date),
-      XdrSCVal.forU32(logType),
       XdrSCVal.forString(encryptedLogValue),
       XdrSCVal.forString(yearHash),
       XdrSCVal.forString(monthHash),
@@ -51,7 +55,7 @@ class HpInsertLog {
         debugPrint('preflight: $error');
         debugPrint('---------------------------------------------------------');
       }
-      return;
+      return false;
     }
 
     List<SimulateTransactionResult> preflight = simulateResponse.results ?? [];
@@ -60,7 +64,7 @@ class HpInsertLog {
         debugPrint('preflight: empty result');
         debugPrint('---------------------------------------------------------');
       }
-      return;
+      return false;
     }
 
     debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
@@ -69,9 +73,11 @@ class HpInsertLog {
 
     GetTransactionResponse? getTxResponse =
         await getIt<ContractTxHandler>().signAndSubmit(account, transaction, simulateResponse, publicKey);
-    if (getTxResponse == null || getTxResponse.status != GetTransactionResponse.STATUS_SUCCESS) return;
+    if (getTxResponse == null || getTxResponse.status != GetTransactionResponse.STATUS_SUCCESS) return false;
     int result = getTxResponse.getResultValue()!.u32!.uint32;
     debugPrint('getTxResponse result: $result');
     debugPrint('---------------------------------------------------------');
+
+    return true;
   }
 }
