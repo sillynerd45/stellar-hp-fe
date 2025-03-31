@@ -18,6 +18,10 @@ class ContractTxHandler {
       return HpError.dataNotExist;
     }
 
+    if (errorMessage.contains('Error(Contract, #4)')) {
+      return HpError.wrongAuth;
+    }
+
     return HpError.unknown;
   }
 

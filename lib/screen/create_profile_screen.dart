@@ -433,8 +433,13 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                       }
                       context.read<MainProvider>().setUserProfile(userProfile);
 
-                      // go to home
-                      GoRouter.of(context).popAllAndPushReplaced(NavRoute.home);
+                      if (userProfile.accountType == AccountType.user) {
+                        // go to home
+                        GoRouter.of(context).popAllAndPushReplaced(NavRoute.home);
+                      } else {
+                        // go to clinic
+                        GoRouter.of(context).popAllAndPushReplaced(NavRoute.clinic);
+                      }
                     },
                   ),
                 );

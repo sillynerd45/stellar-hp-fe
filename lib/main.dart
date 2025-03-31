@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 
 void main() async {
   await DependencyInjection.init(
     rpc: const String.fromEnvironment('rpc'),
-    seed: const String.fromEnvironment('seed'),
+    seed: KeyPair.random().secretSeed,
     contractAddress: const String.fromEnvironment('contractAddress'),
   );
   await getIt.isReady<SharedPreferences>();
@@ -22,6 +23,7 @@ class StellarHpApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<MainProvider>(create: (_) => getIt<MainProvider>()),
+        ChangeNotifierProvider<ConsultationProvider>(create: (_) => getIt<ConsultationProvider>()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

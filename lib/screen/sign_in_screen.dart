@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 import 'package:stellar_hp_fe/widgets/widgets.dart';
 
@@ -21,10 +22,29 @@ class _SignInScreenState extends State<SignInScreen> {
 
   ValueNotifier<bool> isLoggingIn = ValueNotifier<bool>(false);
 
+  late TextEditingController skController;
+
+  @override
+  void initState() {
+    super.initState();
+    skController = TextEditingController();
+  }
+
   @override
   void dispose() {
     isLoggingIn.dispose();
+    skController.dispose();
     super.dispose();
+  }
+
+  Future<void> _invalidSecretKe(BuildContext context) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Invalid Secret Key'),
+        duration: Duration(milliseconds: 1500),
+        backgroundColor: stellarHpBlue,
+      ),
+    );
   }
 
   @override
@@ -83,32 +103,73 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
+                  double maxWidth = constraints.maxWidth;
+                  double adjustedLogoWidth = maxWidth >= appMaxScreenWidth - 300 ? appMaxScreenWidth - 300 : maxWidth;
                   return ValueListenableBuilder(
                       valueListenable: isLoggingIn,
                       builder: (BuildContext context, bool loggingIn, Widget? child) {
                         if (loggingIn) return const SizedBox(height: 0);
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 80),
-                          child: AppElevatedButton(
-                            title: 'Connect',
-                            onPressed: () async {
-                              if (isLoggingIn.value) return;
-                              isLoggingIn.value = true;
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: SizedBox(
+                                  width: adjustedLogoWidth,
+                                  child: StellarHpTextField(
+                                    label: 'your Secret Key',
+                                    color: stellarHpBlue,
+                                    textInputAction: TextInputAction.done,
+                                    textController: skController,
+                                    keyboardType: TextInputType.text,
+                                  ),
+                                ),
+                              ),
+                              AppElevatedButton(
+                                title: 'Connect',
+                                onPressed: () async {
+                                  if (isLoggingIn.value) return;
+                                  isLoggingIn.value = true;
 
-                              bool userExist =
-                                  await getIt<HpGetLogHash>().invoke(publicKey: getIt<UserIdService>().getPublicKey());
-                              if (!context.mounted) return;
+                                  bool isValid = StrKey.isValidStellarSecretSeed(skController.text);
+                                  if (!isValid) {
+                                    _invalidSecretKe(context);
+                                    isLoggingIn.value = false;
+                                    return;
+                                  }
 
-                              if (userExist) {
-                                await loadAndSetUserData(context, getIt<UserIdService>().getPublicKey());
-                                if (!context.mounted) return;
-                                context.pushReplacement(NavRoute.home);
-                              } else {
-                                context.push(NavRoute.createProfile);
-                              }
+                                  getIt<UserIdService>().saveNewKeypair(KeyPair.fromSecretSeed(skController.text));
 
-                              isLoggingIn.value = false;
-                            },
+                                  bool userExist = await getIt<HpGetLogHash>()
+                                      .invoke(publicKey: getIt<UserIdService>().getPublicKey());
+                                  if (!context.mounted) return;
+
+                                  if (userExist) {
+                                    await loadAndSetUserData(context, getIt<UserIdService>().getPublicKey());
+                                    if (!context.mounted) return;
+
+                                    AccountType? accountType = getIt<MainProvider>().userProfile?.accountType;
+                                    if (accountType == null) {
+                                      isLoggingIn.value = false;
+                                      return;
+                                    }
+
+                                    if (accountType == AccountType.user) {
+                                      // go to home
+                                      context.pushReplacement(NavRoute.home);
+                                    } else {
+                                      // go to clinic
+                                      context.pushReplacement(NavRoute.clinic);
+                                    }
+                                  } else {
+                                    context.push(NavRoute.createProfile);
+                                  }
+
+                                  isLoggingIn.value = false;
+                                },
+                              ),
+                            ],
                           ),
                         );
                       });
@@ -135,5 +196,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     // start decryption process on the first five date
     await context.read<MainProvider>().checkEncryptedDataInFirstFiveDateOnHealthLogs();
+
+    await getIt<ConsultationProvider>().loadConsultFromStorage();
   }
 }

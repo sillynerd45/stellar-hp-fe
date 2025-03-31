@@ -46,10 +46,12 @@ class HpGetProfile {
       return null;
     }
 
-    debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
     String preflightResult = preflight.first.resultValue!.str!;
-    debugPrint('preflight result: $preflightResult');
-    debugPrint('---------------------------------------------------------');
+
+    if (kDebugMode) {
+      debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
+      debugPrint('preflight result: $preflightResult');
+    }
 
     String jsonEncodedPlainProfileText =
         getIt<HashService>().decrypt(encryptedText: preflightResult, seed: getIt<UserIdService>().getSeed());

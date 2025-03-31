@@ -1,41 +1,41 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 
-class HpSignUp {
+class HpConsultData {
   final String fn;
 
-  HpSignUp({
+  HpConsultData({
     required this.fn,
   });
 
   Future<bool> invoke({
     required String publicKey,
-    required UserProfile userProfile,
+    required String name,
+    required String doctorHash,
+    required String userHash,
+    required String userRSA,
+    required String doctorRSA,
+    required Map<String, YearlyHealthLogs> data,
+    required String consultHash,
   }) async {
     debugPrint('Invoke $fn for $publicKey');
 
     AccountResponse account = await getIt<StellarNetwork>().stellar.accounts.account(publicKey);
 
-    // health worker name
-    String healthWorkerName = '';
-    if (userProfile.accountType == AccountType.healthWorker) {
-      healthWorkerName = userProfile.name ?? '---';
-    }
-
-    // encrypt profile
-    String plainProfileText = jsonEncode(userProfile.toJson());
-    String encryptedProfileText =
-        getIt<HashService>().encrypt(plainText: plainProfileText, seed: getIt<UserIdService>().getSeed());
+    String dataHash = getIt<HashService>().generate(publicKey: publicKey);
+    String encodedUserRSA = getIt<HashService>().removePemHeaders(userRSA);
+    String dataEncodedWithDoctorRSA = getIt<HashService>().encodeYearlyHealthLogsRSA(data, doctorRSA);
 
     List<XdrSCVal> params = [
       XdrSCVal.forAccountAddress(publicKey),
-      XdrSCVal.forString(encryptedProfileText),
-      XdrSCVal.forU32(userProfile.accountType!.typeId),
-      XdrSCVal.forString(userProfile.logHash!),
-      XdrSCVal.forString(healthWorkerName),
+      XdrSCVal.forString(name),
+      XdrSCVal.forString(doctorHash),
+      XdrSCVal.forString(userHash),
+      XdrSCVal.forString(encodedUserRSA),
+      XdrSCVal.forString(dataHash),
+      XdrSCVal.forString(dataEncodedWithDoctorRSA),
+      XdrSCVal.forString(consultHash),
     ];
 
     InvokeHostFunctionOperation operation = getIt<SorobanSmartContract>().buildOperation(fn, params);

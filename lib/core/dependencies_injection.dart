@@ -13,6 +13,7 @@ class DependencyInjection {
   }) async {
     // Provider
     getIt.registerLazySingleton(() => MainProvider());
+    getIt.registerLazySingleton(() => ConsultationProvider());
 
     // Service
     getIt.registerLazySingleton(() => HashService());
@@ -40,6 +41,12 @@ class DependencyInjection {
     getIt.registerLazySingleton(() => HpInsertLog(fn: 'insert_log'));
     getIt.registerLazySingleton(() => HpGetProfile(fn: 'get_profile'));
     getIt.registerLazySingleton(() => HpReadAllLog(fn: 'read_all_log'));
+    getIt.registerLazySingleton(() => HpGetHealthWorkers(fn: 'get_health_workers'));
+    getIt.registerLazySingleton(() => HpConsultRequest(fn: 'consult_request'));
+    getIt.registerLazySingleton(() => HpConsultAccepted(fn: 'consult_accepted'));
+    getIt.registerLazySingleton(() => HpConsultData(fn: 'consult_data'));
+    getIt.registerLazySingleton(() => HpGetSingleLog(fn: 'get_single_log'));
+    getIt.registerLazySingleton(() => HpConsultResult(fn: 'consult_result'));
 
     // Smart Contract Component
     getIt.registerLazySingleton(() => ContractTxHandler());

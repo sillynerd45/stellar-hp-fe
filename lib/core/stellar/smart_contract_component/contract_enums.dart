@@ -2,6 +2,7 @@ enum HpError {
   userExist,
   userNotExist,
   dataNotExist,
+  wrongAuth,
   unknown,
 }
 

@@ -15,6 +15,7 @@ const String menuBodyTemp = 'assets/menu/body_temp_menu.png';
 const String menuMedication = 'assets/menu/medication_menu.png';
 const String menuBloodPressure = 'assets/menu/blood_pressure_menu.png';
 
+const String emptyListReport = 'assets/report_empty_list.png';
 const String emptyListMedication = 'assets/medication_empty_list.png';
 
 const String menuOpen = 'assets/menu/open_menu.png';
@@ -33,4 +34,6 @@ const String keyHealthLogs = 'stellarHpUserData';
 const String keyHealthLogsUpdateAt = 'stellarHpHealthLogsUpdateAt';
 const String keyHealthReports = 'stellarHpUserHealthReport';
 const String keyHealthReportsUpdateAt = 'stellarHpUserHealthReportUpdateAt';
+const String keyConsultMapUSER = 'stellarHpConsultMapUSER';
+const String keyConsultMapDOCTOR = 'stellarHpConsultMapDOCTOR';
 

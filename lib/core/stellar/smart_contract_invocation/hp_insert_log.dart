@@ -67,16 +67,22 @@ class HpInsertLog {
       return false;
     }
 
-    debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
     int preflightResult = preflight.first.resultValue!.u32!.uint32;
-    debugPrint('preflight result: $preflightResult');
+
+    if (kDebugMode) {
+      debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
+      debugPrint('preflight result: $preflightResult');
+    }
 
     GetTransactionResponse? getTxResponse =
         await getIt<ContractTxHandler>().signAndSubmit(account, transaction, simulateResponse, publicKey);
     if (getTxResponse == null || getTxResponse.status != GetTransactionResponse.STATUS_SUCCESS) return false;
     int result = getTxResponse.getResultValue()!.u32!.uint32;
-    debugPrint('getTxResponse result: $result');
-    debugPrint('---------------------------------------------------------');
+
+    if (kDebugMode) {
+      debugPrint('getTxResponse result: $result');
+      debugPrint('---------------------------------------------------------');
+    }
 
     return true;
   }

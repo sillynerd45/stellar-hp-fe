@@ -18,6 +18,7 @@ class StellarHpTextField extends StatelessWidget {
     this.onFieldSubmitted,
     this.focusNode,
     this.textInputAction,
+    this.readOnly = false,
   });
 
   final String label;
@@ -34,12 +35,14 @@ class StellarHpTextField extends StatelessWidget {
   final Function(String)? onFieldSubmitted;
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: textController,
       cursorHeight: 22.0,
+      readOnly: readOnly,
       cursorColor: color,
       maxLines: maxLines,
       focusNode: focusNode,

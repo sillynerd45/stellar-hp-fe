@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:basic_utils/basic_utils.dart';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
+
+import 'package:stellar_hp_fe/core/core.dart';
 
 class HashService {
   String generate({
@@ -82,4 +85,111 @@ class HashService {
     String result = encrypter.decrypt(cipherText, iv: iv);
     return result;
   }
+
+  String removePemHeaders(String publicPem) {
+    return publicPem
+        .replaceAll('-----BEGIN RSA PUBLIC KEY-----', '')
+        .replaceAll('-----END RSA PUBLIC KEY-----', '')
+        .replaceAll(RegExp(r'\s+'), '');
+  }
+
+  String addPemHeaders(String headerLessPublicPem) {
+    final formattedBody = headerLessPublicPem.replaceAllMapped(
+      RegExp(r'.{1,64}', dotAll: true),
+      (match) => '${match.group(0)}\n',
+    );
+
+    return '''
+    -----BEGIN RSA PUBLIC KEY-----
+    $formattedBody
+    -----END RSA PUBLIC KEY-----
+    ''';
+  }
+
+  String encryptRSA({
+    required String plainText,
+    required String publicKeyPem,
+  }) {
+    Encrypter encrypterRSA = Encrypter(RSA(publicKey: CryptoUtils.rsaPublicKeyFromPem(publicKeyPem)));
+
+    Key key = Key.fromSecureRandom(32);
+    IV iv = IV.fromSecureRandom(16);
+    Encrypted encryptedKey = encrypterRSA.encryptBytes(key.bytes);
+    Encrypted encryptedIV = encrypterRSA.encryptBytes(iv.bytes);
+    Encrypter aesEncrypter = Encrypter(AES(key, mode: AESMode.cbc));
+    Encrypted encryptedData = aesEncrypter.encrypt(plainText, iv: iv);
+
+    Map<String, String> payload = {
+      'a': encryptedKey.base64,
+      'b': encryptedIV.base64,
+      'c': encryptedData.base64,
+    };
+
+    return jsonEncode(payload);
+  }
+
+  String decryptRSA({
+    required String encryptedText,
+    required String privateKeyPem,
+  }) {
+    Map<String, dynamic> parsed = jsonDecode(encryptedText);
+
+    String encryptedKeyBase64 = parsed['a'];
+    String encryptedIVBase64 = parsed['b'];
+    String encryptedDataBase64 = parsed['c'];
+
+    Encrypted encryptedKey = Encrypted.fromBase64(encryptedKeyBase64);
+    Encrypted encryptedIV = Encrypted.fromBase64(encryptedIVBase64);
+    Encrypted encryptedData = Encrypted.fromBase64(encryptedDataBase64);
+
+    Encrypter decrypterRSA = Encrypter(RSA(privateKey: CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem)));
+    final aesKeyBytes = decrypterRSA.decryptBytes(encryptedKey);
+    final aesIVBytes = decrypterRSA.decryptBytes(encryptedIV);
+
+    Encrypter aesDecrypter = Encrypter(AES(Key(Uint8List.fromList(aesKeyBytes)), mode: AESMode.cbc));
+    String decryptedData = aesDecrypter.decrypt(encryptedData, iv: IV(Uint8List.fromList(aesIVBytes)));
+
+    return decryptedData;
+  }
+
+  String getPublicKeyPEM(AsymmetricKeyPair keyPair) {
+    return CryptoUtils.encodeRSAPublicKeyToPemPkcs1(keyPair.publicKey as RSAPublicKey);
+  }
+
+  String getPrivateKeyPEM(AsymmetricKeyPair keyPair) {
+    return CryptoUtils.encodeRSAPrivateKeyToPem(keyPair.privateKey as RSAPrivateKey);
+  }
+
+  String encodeYearlyHealthLogsRSA(
+    Map<String, YearlyHealthLogs> data,
+    String publicKeyPem,
+  ) {
+    final jsonMap = data.map((yearKey, yearlyLogs) {
+      return MapEntry(yearKey, yearlyLogs.toJson());
+    });
+    return encryptRSA(plainText: jsonEncode(jsonMap), publicKeyPem: publicKeyPem);
+  }
+
+  Map<String, YearlyHealthLogs> decodeYearlyHealthLogsRSA(
+    String encryptedText,
+    String privateKeyPem,
+  ) {
+    String jsonString = decryptRSA(encryptedText: encryptedText, privateKeyPem: privateKeyPem);
+    final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+    return jsonMap.map((yearKey, yearlyLogsJson) {
+      return MapEntry(yearKey, YearlyHealthLogs.fromJson(yearlyLogsJson));
+    });
+  }
+}
+
+class EncryptedData {
+  final Encrypted encryptedKey;
+  final Encrypted encryptedIV;
+  final Encrypted encryptedData;
+
+  EncryptedData({
+    required this.encryptedKey,
+    required this.encryptedIV,
+    required this.encryptedData,
+  });
 }

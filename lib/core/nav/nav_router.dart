@@ -20,9 +20,33 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
+      path: NavRoute.clinic,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return customTransitionPage(state, const ClinicScreen());
+      },
+    ),
+    GoRoute(
+      path: NavRoute.consultation,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return customTransitionPage(state, const ConsultationScreen());
+      },
+    ),
+    GoRoute(
       path: NavRoute.signIn,
       pageBuilder: (BuildContext context, GoRouterState state) {
         return customTransitionPage(state, const SignInScreen());
+      },
+    ),
+    GoRoute(
+      path: NavRoute.diagnose,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return customTransitionPage(state, const DiagnoseScreen());
+      },
+    ),
+    GoRoute(
+      path: NavRoute.report,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return customTransitionPage(state, const ReportScreen());
       },
     ),
     GoRoute(

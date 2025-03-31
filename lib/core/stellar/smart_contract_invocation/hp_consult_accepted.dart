@@ -1,41 +1,36 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 
-class HpSignUp {
+class HpConsultAccepted {
   final String fn;
 
-  HpSignUp({
+  HpConsultAccepted({
     required this.fn,
   });
 
   Future<bool> invoke({
     required String publicKey,
-    required UserProfile userProfile,
+    required String name,
+    required String userHash,
+    required String doctorHash,
+    required String doctorRSA,
+    required String dataPeriod,
+    required String consultHash,
   }) async {
     debugPrint('Invoke $fn for $publicKey');
 
     AccountResponse account = await getIt<StellarNetwork>().stellar.accounts.account(publicKey);
-
-    // health worker name
-    String healthWorkerName = '';
-    if (userProfile.accountType == AccountType.healthWorker) {
-      healthWorkerName = userProfile.name ?? '---';
-    }
-
-    // encrypt profile
-    String plainProfileText = jsonEncode(userProfile.toJson());
-    String encryptedProfileText =
-        getIt<HashService>().encrypt(plainText: plainProfileText, seed: getIt<UserIdService>().getSeed());
+    String encodedDoctorRSA = getIt<HashService>().removePemHeaders(doctorRSA);
 
     List<XdrSCVal> params = [
       XdrSCVal.forAccountAddress(publicKey),
-      XdrSCVal.forString(encryptedProfileText),
-      XdrSCVal.forU32(userProfile.accountType!.typeId),
-      XdrSCVal.forString(userProfile.logHash!),
-      XdrSCVal.forString(healthWorkerName),
+      XdrSCVal.forString(name),
+      XdrSCVal.forString(userHash),
+      XdrSCVal.forString(doctorHash),
+      XdrSCVal.forString(encodedDoctorRSA),
+      XdrSCVal.forString(dataPeriod),
+      XdrSCVal.forString(consultHash),
     ];
 
     InvokeHostFunctionOperation operation = getIt<SorobanSmartContract>().buildOperation(fn, params);

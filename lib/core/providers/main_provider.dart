@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core.dart';
 
@@ -10,6 +9,11 @@ class MainProvider extends ChangeNotifier {
   int todayDateIndex = 0;
   StellarHpDate? chosenDate;
   DailyHealthLogs? chosenDailyHealthLogs;
+
+  // for Clinic Page
+  String reportPeriod = '3 Days';
+  List<ConsultationReport> healthReportList = [];
+  List<HealthWorker> healthWorkerList = [];
 
   // for Data
   UserProfile? userProfile;
@@ -37,6 +41,15 @@ class MainProvider extends ChangeNotifier {
     stellarHpDateList = dateList;
   }
 
+  void getHealthWorker(String publicKey) async {
+    if (healthWorkerList.isNotEmpty) return;
+    healthWorkerList = await getIt<HpGetHealthWorkers>().invoke(publicKey: publicKey);
+
+    for (HealthWorker worker in healthWorkerList) {
+      getIt<ConsultationProvider>().insertHashID(worker.hashId!, worker.name!);
+    }
+  }
+
   Future<void> checkEncryptedDataInFirstFiveDateOnHealthLogs() async {
     // set true to prevent userHealthLogs mutation during decryption progress
     isHealthLogDecryptionInProgress = true;
@@ -48,8 +61,8 @@ class MainProvider extends ChangeNotifier {
       DateTime chosenLogTime = stellarHpDateList[i].dateTime!;
       String year = chosenLogTime.year.toString();
       YearlyHealthLogs yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData);
-      DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData);
+      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData)!;
+      DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData)!;
 
       // decrypt if encryptedData still exist
       if (dailyData.encryptedData != null) {
@@ -78,8 +91,8 @@ class MainProvider extends ChangeNotifier {
       DateTime chosenLogTime = stellarHpDateList[i].dateTime!;
       String year = chosenLogTime.year.toString();
       YearlyHealthLogs yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData);
-      DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData);
+      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData)!;
+      DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData)!;
 
       // decrypt if encryptedData still exist
       if (dailyData.encryptedData != null) {
@@ -126,7 +139,9 @@ class MainProvider extends ChangeNotifier {
     if (isHealthLogDecryptionInProgress) return false;
 
     try {
-      await getIt<SharedPreferences>().clear();
+      // await getIt<SharedPreferences>().clear();
+      getIt<SorobanSmartContract>().stopListen();
+      getIt<ConsultationProvider>().clearTempData();
 
       chosenDailyHealthLogs = null;
       userHealthLogs.clear();
@@ -146,8 +161,8 @@ class MainProvider extends ChangeNotifier {
   DailyHealthLogs searchDailyHealthLogsData(DateTime dateTime) {
     String year = dateTime.year.toString();
     YearlyHealthLogs yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs monthlyData = getMonthlyData(dateTime, yearlyData);
-    return getDailyData(dateTime, monthlyData);
+    MonthlyHealthLogs monthlyData = getMonthlyData(dateTime, yearlyData)!;
+    return getDailyData(dateTime, monthlyData)!;
   }
 
   Future<bool> saveDailyLog(Object log, DateTime chosenLogTime) async {
@@ -157,8 +172,8 @@ class MainProvider extends ChangeNotifier {
     // search data
     String year = chosenLogTime.year.toString();
     YearlyHealthLogs yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData);
-    DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData);
+    MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData)!;
+    DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData)!;
 
     switch (log) {
       case BodyTemperature e:
@@ -206,8 +221,8 @@ class MainProvider extends ChangeNotifier {
     // search data
     String year = chosenLogTime.year.toString();
     YearlyHealthLogs yearlyData = userHealthLogs[year] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData);
-    DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData);
+    MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData)!;
+    DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData)!;
 
     switch (log) {
       case BodyTemperature e:
@@ -260,8 +275,8 @@ class MainProvider extends ChangeNotifier {
     // search and remove previous data
     String previousYear = previousLogTime.year.toString();
     YearlyHealthLogs previousYearlyData = userHealthLogs[previousYear] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs previousMonthlyData = getMonthlyData(previousLogTime, previousYearlyData);
-    DailyHealthLogs previousDailyData = getDailyData(previousLogTime, previousMonthlyData);
+    MonthlyHealthLogs previousMonthlyData = getMonthlyData(previousLogTime, previousYearlyData)!;
+    DailyHealthLogs previousDailyData = getDailyData(previousLogTime, previousMonthlyData)!;
 
     switch (previousLog) {
       case BodyTemperature e:
@@ -285,8 +300,8 @@ class MainProvider extends ChangeNotifier {
     // search and add new data
     String newYear = newLogTime.year.toString();
     YearlyHealthLogs newYearlyData = userHealthLogs[newYear] ?? YearlyHealthLogs.fromJson({});
-    MonthlyHealthLogs newMonthlyData = getMonthlyData(newLogTime, newYearlyData);
-    DailyHealthLogs newDailyData = getDailyData(newLogTime, newMonthlyData);
+    MonthlyHealthLogs newMonthlyData = getMonthlyData(newLogTime, newYearlyData)!;
+    DailyHealthLogs newDailyData = getDailyData(newLogTime, newMonthlyData)!;
 
     switch (newLog) {
       case BodyTemperature e:
@@ -333,7 +348,7 @@ class MainProvider extends ChangeNotifier {
     return true;
   }
 
-  MonthlyHealthLogs getMonthlyData(DateTime time, YearlyHealthLogs yearlyData) {
+  MonthlyHealthLogs? getMonthlyData(DateTime time, YearlyHealthLogs yearlyData, {bool allowNull = false}) {
     String month = DateFormat('MMMM').format(time).toLowerCase();
     MonthlyHealthLogs? monthlyData;
     switch (month) {
@@ -362,11 +377,12 @@ class MainProvider extends ChangeNotifier {
       case 'december':
         monthlyData = yearlyData.december ?? MonthlyHealthLogs.fromJson({});
     }
+    if (monthlyData == null && allowNull) return null;
     if (monthlyData == null) return MonthlyHealthLogs.fromJson({});
     return monthlyData;
   }
 
-  DailyHealthLogs getDailyData(DateTime time, MonthlyHealthLogs monthlyData) {
+  DailyHealthLogs? getDailyData(DateTime time, MonthlyHealthLogs monthlyData, {bool allowNull = false}) {
     String day = DateFormat('dd').format(time).toLowerCase();
     DailyHealthLogs? dailyData;
     switch (day) {
@@ -433,6 +449,7 @@ class MainProvider extends ChangeNotifier {
       case '31':
         dailyData = monthlyData.d31 ?? DailyHealthLogs.fromJson({});
     }
+    if (dailyData == null && allowNull) return null;
     if (dailyData == null) return DailyHealthLogs.fromJson({});
     return dailyData;
   }
@@ -557,7 +574,7 @@ class MainProvider extends ChangeNotifier {
 
       // get monthly and yearly data
       YearlyHealthLogs yearlyData = healthMap[year] ?? YearlyHealthLogs.fromJson({});
-      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData);
+      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData)!;
 
       // update monthly and yearly data
       monthlyData = updateMonthlyData(chosenLogTime, monthlyData, dailyLog);
@@ -579,5 +596,30 @@ class MainProvider extends ChangeNotifier {
       return log.medicine.first.epochTimestamp;
     }
     return null;
+  }
+
+  Map<String, YearlyHealthLogs> filterLogsByDays(Map<String, YearlyHealthLogs> originalMap, int daysBack) {
+    if (daysBack <= 0) return {};
+
+    Map<String, YearlyHealthLogs> filteredMap = <String, YearlyHealthLogs>{};
+
+    for (int i = 0; i < daysBack; i++) {
+      DateTime chosenLogTime = DateTime.now().subtract(Duration(days: i));
+      String year = chosenLogTime.year.toString();
+
+      // get data from current map
+      YearlyHealthLogs yearlyData = originalMap[year] ?? YearlyHealthLogs.fromJson({});
+      MonthlyHealthLogs monthlyData = getMonthlyData(chosenLogTime, yearlyData)!;
+      DailyHealthLogs dailyData = getDailyData(chosenLogTime, monthlyData)!;
+
+      // save data to new map
+      YearlyHealthLogs yearlyNew = filteredMap[year] ?? YearlyHealthLogs.fromJson({});
+      MonthlyHealthLogs monthlyNew = getMonthlyData(chosenLogTime, yearlyNew)!;
+      monthlyNew = updateMonthlyData(chosenLogTime, monthlyNew, dailyData);
+      yearlyNew = updateYearlyData(chosenLogTime, yearlyNew, monthlyNew);
+      filteredMap.update(year, (_) => yearlyNew, ifAbsent: () => yearlyNew);
+    }
+
+    return filteredMap;
   }
 }

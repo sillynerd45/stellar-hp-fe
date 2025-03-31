@@ -52,6 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
     chosenDailyHealthLogs = ValueNotifier<DailyHealthLogs>(
         context.read<MainProvider>().chosenDailyHealthLogs ?? DailyHealthLogs.fromJson({}));
 
+    context.read<MainProvider>().getHealthWorker(getIt<UserIdService>().getPublicKey());
+    getIt<SorobanSmartContract>().listenToEvent();
+
     dateCheck();
     super.initState();
   }
@@ -244,42 +247,95 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           // ! Log Button
                           // ! ------------------------------------------------------------------
+                          Builder(builder: (context) {
+                            AccountType accountType = getIt<MainProvider>().userProfile!.accountType!;
+                            String name = '-';
+                            if (accountType == AccountType.user) {
+                              name = getIt<MainProvider>().userProfile?.name ?? '-';
+                            } else {
+                              name = getIt<ConsultationProvider>().tempUserName;
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: StellarHpUsernameButton(
+                                text: name,
+                              ),
+                            );
+                          }),
+                          Builder(builder: (context) {
+                            AccountType accountType = getIt<MainProvider>().userProfile!.accountType!;
+                            if (accountType == AccountType.healthWorker) return const SizedBox();
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: StellarHpPublicKeyButton(
+                                text: getIt<UserIdService>().userKeypair.accountId,
+                              ),
+                            );
+                          }),
+                          Builder(builder: (context) {
+                            AccountType accountType = getIt<MainProvider>().userProfile!.accountType!;
+                            if (accountType == AccountType.healthWorker) return const SizedBox();
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: HomeLoggingMenu(
+                                bodyTemp: () async {
+                                  bool? success = await BodyTemperatureLogSheet.show(context,
+                                      chosenDate: chosenDate.value.dateTime);
+                                  if (success != null && success) forceUpdateDailyHealthLogs();
+                                },
+                                bloodPressure: () async {
+                                  bool? success =
+                                      await BloodPressureLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
+                                  if (success != null && success) forceUpdateDailyHealthLogs();
+                                },
+                                medication: () async {
+                                  bool? success =
+                                      await MedicationLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
+                                  if (success != null && success) forceUpdateDailyHealthLogs();
+                                },
+                                symptom: () async {
+                                  bool? success =
+                                      await SymptomLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
+                                  if (success != null && success) forceUpdateDailyHealthLogs();
+                                },
+                              ),
+                            );
+                          }),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: StellarHpUsernameButton(
-                              text: getIt<MainProvider>().userProfile?.name ?? '-',
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: StellarHpPublicKeyButton(
-                              text: getIt<UserIdService>().userKeypair.accountId,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: HomeLoggingMenu(
-                              bodyTemp: () async {
-                                bool? success =
-                                    await BodyTemperatureLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
-                                if (success != null && success) forceUpdateDailyHealthLogs();
-                              },
-                              bloodPressure: () async {
-                                bool? success =
-                                    await BloodPressureLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
-                                if (success != null && success) forceUpdateDailyHealthLogs();
-                              },
-                              medication: () async {
-                                bool? success =
-                                    await MedicationLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
-                                if (success != null && success) forceUpdateDailyHealthLogs();
-                              },
-                              symptom: () async {
-                                bool? success =
-                                    await SymptomLogSheet.show(context, chosenDate: chosenDate.value.dateTime);
-                                if (success != null && success) forceUpdateDailyHealthLogs();
-                              },
-                            ),
+                            child: Builder(builder: (context) {
+                              AccountType accountType = getIt<MainProvider>().userProfile!.accountType!;
+
+                              if (accountType == AccountType.user) {
+                                return StellarHpDoctorConsultationButton(
+                                  text: 'Consult with Doctor',
+                                  onPressed: () {
+                                    context.pushReplacement(NavRoute.consultation);
+                                  },
+                                );
+                              }
+
+                              return Row(
+                                spacing: 8,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  StellarHpDoctorConsultationButton(
+                                    text: 'Back',
+                                    onPressed: () {
+                                      context.pushReplacement(NavRoute.clinic);
+                                    },
+                                  ),
+                                  StellarHpDoctorConsultationButton(
+                                    text: 'Create Diagnose',
+                                    onPressed: () {
+                                      context.push(NavRoute.diagnose);
+                                    },
+                                  ),
+                                ],
+                              );
+                            }),
                           ),
                           // ! Log List
                           // ! ------------------------------------------------------------------

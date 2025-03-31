@@ -2,23 +2,21 @@ import 'package:flutter/foundation.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 
-class HpGetLogHash {
+class HpGetHealthWorkers {
   final String fn;
 
-  HpGetLogHash({
+  HpGetHealthWorkers({
     required this.fn,
   });
 
-  Future<bool> invoke({
+  Future<List<HealthWorker>> invoke({
     required String publicKey,
   }) async {
     debugPrint('Invoke $fn for $publicKey');
 
     AccountResponse account = await getIt<StellarNetwork>().stellar.accounts.account(publicKey);
 
-    List<XdrSCVal> params = [
-      XdrSCVal.forAccountAddress(publicKey),
-    ];
+    List<XdrSCVal> params = [];
 
     InvokeHostFunctionOperation operation = getIt<SorobanSmartContract>().buildOperation(fn, params);
     Transaction transaction = TransactionBuilder(account).addOperation(operation).build();
@@ -32,7 +30,7 @@ class HpGetLogHash {
         debugPrint('preflight: $error');
         debugPrint('---------------------------------------------------------');
       }
-      return false;
+      return [];
     }
 
     List<SimulateTransactionResult> preflight = simulateResponse.results ?? [];
@@ -41,16 +39,16 @@ class HpGetLogHash {
         debugPrint('preflight: empty result');
         debugPrint('---------------------------------------------------------');
       }
-      return false;
+      return [];
     }
 
-    String preflightResult = preflight.first.resultValue!.str!;
+    List<HealthWorker> workerList = [];
 
-    if (kDebugMode) {
-      debugPrint('preflight type: ${preflight.first.resultValue!.discriminant.value}');
-      debugPrint('preflight result: $preflightResult');
+    for (XdrSCMapEntry v in preflight.first.resultValue!.map!) {
+      if (v.key.str == null) continue;
+      workerList.add(HealthWorker(name: v.val.str, hashId: v.key.str));
     }
 
-    return true;
+    return workerList;
   }
 }
