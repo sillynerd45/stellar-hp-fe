@@ -45,4 +45,5 @@ app.*.map.json
 /android/app/release
 
 dev
-env
+env/user.json
+env/health-worker.json
