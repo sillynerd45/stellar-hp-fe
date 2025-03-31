@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stellar_hp_fe/core/core.dart';
 import 'package:stellar_hp_fe/widgets/widgets.dart';
@@ -116,10 +117,32 @@ class _HealthWorkerItemState extends State<HealthWorkerItem> {
                   if (creatingConsultation) return;
                   creatingConsultation = true;
 
-                  await getIt<ConsultationProvider>().createNewConsult(
-                    doctorHash: widget.worker.hashId!,
-                    dataPeriod: consultationPeriodNotifier.value,
-                  );
+                  // show waiting dialog
+                  MediDialog.loading(context);
+
+                  try {
+                    bool isSuccess = await getIt<ConsultationProvider>().createNewConsult(
+                      doctorHash: widget.worker.hashId!,
+                      dataPeriod: consultationPeriodNotifier.value,
+                    );
+
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    if (!isSuccess) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) async {
+                        MediDialog.aiFailureDialog(context, message: "please try again");
+                      });
+                    }
+                  } catch (e) {
+                    if (kDebugMode) {
+                      debugPrint('HealthWorkerItem createNewConsult: $e');
+                    }
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      MediDialog.aiFailureDialog(context, message: "please try again");
+                    });
+                  }
 
                   creatingConsultation = false;
                 },

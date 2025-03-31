@@ -129,17 +129,29 @@ class _ConsultationDetailsState extends State<ConsultationDetails> {
                         if (getDiagnosisReport) return;
                         getDiagnosisReport = true;
 
+                        // show waiting dialog
+                        MediDialog.loading(context);
+
                         bool isSuccess = await getIt<ConsultationProvider>().prepareShowDoctorDiagnosis(
                           doctorHash: (widget.consultData as ConsultResult).fromDoctor,
                           diagnosisHash: (widget.consultData as ConsultResult).resultHash,
                         );
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+
                         if (!isSuccess) {
                           getDiagnosisReport = false;
+                          WidgetsBinding.instance.addPostFrameCallback((_) async {
+                            MediDialog.aiFailureDialog(context, message: "please try again");
+                          });
                           return;
                         }
 
-                        if (!context.mounted) return;
-                        if (isSuccess) context.pushReplacement(NavRoute.report);
+                        if (isSuccess) {
+                          await Future.delayed(const Duration(milliseconds: 100));
+                          if (!context.mounted) return;
+                          context.pushReplacement(NavRoute.report);
+                        }
 
                         getDiagnosisReport = false;
                       },

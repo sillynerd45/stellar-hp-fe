@@ -80,11 +80,11 @@ class ConsultationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> createNewConsult({
+  Future<bool> createNewConsult({
     required String doctorHash,
     required String dataPeriod,
   }) async {
-    if (processConsultation) return;
+    if (processConsultation) return false;
     processConsultation = true;
 
     String name = getIt<MainProvider>().userProfile!.name!;
@@ -117,7 +117,7 @@ class ConsultationProvider extends ChangeNotifier {
 
     if (!isSuccess) {
       processConsultation = false;
-      return;
+      return false;
     }
 
     // save data to map for later use
@@ -125,22 +125,29 @@ class ConsultationProvider extends ChangeNotifier {
     await saveConsultUser();
 
     processConsultation = false;
+    return true;
   }
 
   Future<void> sendConsultData(ConsultAccepted consult) async {
-    String name = getIt<MainProvider>().userProfile!.name!;
-    String userHash = getIt<MainProvider>().userProfile!.logHash!;
+    try {
+      String name = getIt<MainProvider>().userProfile!.name!;
+      String userHash = getIt<MainProvider>().userProfile!.logHash!;
 
-    await getIt<HpConsultData>().invoke(
-      publicKey: getIt<UserIdService>().getPublicKey(),
-      name: name,
-      doctorHash: consult.fromDoctor,
-      userHash: userHash,
-      userRSA: onProgressConsultMapUSER[consult.fromDoctor]!.publicRSA,
-      doctorRSA: getIt<HashService>().addPemHeaders(consult.doctorRsa),
-      data: onProgressConsultMapUSER[consult.fromDoctor]!.logs,
-      consultHash: consult.consultHash,
-    );
+      await getIt<HpConsultData>().invoke(
+        publicKey: getIt<UserIdService>().getPublicKey(),
+        name: name,
+        doctorHash: consult.fromDoctor,
+        userHash: userHash,
+        userRSA: onProgressConsultMapUSER[consult.fromDoctor]!.publicRSA,
+        doctorRSA: getIt<HashService>().addPemHeaders(consult.doctorRsa),
+        data: onProgressConsultMapUSER[consult.fromDoctor]!.logs,
+        consultHash: consult.consultHash,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('ConsultationProvider sendConsultData: $e');
+      }
+    }
   }
 
   Future<String> acceptNewConsult({
@@ -175,33 +182,47 @@ class ConsultationProvider extends ChangeNotifier {
     required String consultHash,
     required ConsultData consult,
   }) async {
-    String? rsaEncodedUserLogs =
-        await getIt<HpGetSingleLog>().invoke(publicKey: getIt<UserIdService>().getPublicKey(), dataHash: dataHash);
-    if (rsaEncodedUserLogs == null) return false;
+    try {
+      String? rsaEncodedUserLogs =
+          await getIt<HpGetSingleLog>().invoke(publicKey: getIt<UserIdService>().getPublicKey(), dataHash: dataHash);
+      if (rsaEncodedUserLogs == null) return false;
 
-    tempUserName = name;
-    tempUserRSA = userRSA;
-    tempUserDataHash = dataHash;
-    tempConsultHash = consultHash;
-    tempConsultData = consult;
+      tempUserName = name;
+      tempUserRSA = userRSA;
+      tempUserDataHash = dataHash;
+      tempConsultHash = consultHash;
+      tempConsultData = consult;
 
-    Map<String, YearlyHealthLogs> userHealthLogData = getIt<HashService>()
-        .decodeYearlyHealthLogsRSA(rsaEncodedUserLogs, onProgressConsultMapDOCTOR[userHash]!.privateRSA);
-    getIt<MainProvider>().setUserHealthLogs(userHealthLogData);
-    return true;
+      Map<String, YearlyHealthLogs> userHealthLogData = getIt<HashService>()
+          .decodeYearlyHealthLogsRSA(rsaEncodedUserLogs, onProgressConsultMapDOCTOR[userHash]!.privateRSA);
+      getIt<MainProvider>().setUserHealthLogs(userHealthLogData);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('ConsultationProvider prepareShowUserHealthLogs: $e');
+      }
+      return false;
+    }
   }
 
   Future<bool> prepareShowDoctorDiagnosis({
     required String doctorHash,
     required String diagnosisHash,
   }) async {
-    String? rsaEncodedDiagnosis =
-        await getIt<HpGetSingleLog>().invoke(publicKey: getIt<UserIdService>().getPublicKey(), dataHash: diagnosisHash);
-    if (rsaEncodedDiagnosis == null) return false;
+    try {
+      String? rsaEncodedDiagnosis = await getIt<HpGetSingleLog>()
+          .invoke(publicKey: getIt<UserIdService>().getPublicKey(), dataHash: diagnosisHash);
+      if (rsaEncodedDiagnosis == null) return false;
 
-    tempDiagnosis = getIt<HashService>().decryptRSA(
-        encryptedText: rsaEncodedDiagnosis, privateKeyPem: onProgressConsultMapUSER[doctorHash]!.privateRSA);
-    return true;
+      tempDiagnosis = getIt<HashService>().decryptRSA(
+          encryptedText: rsaEncodedDiagnosis, privateKeyPem: onProgressConsultMapUSER[doctorHash]!.privateRSA);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('ConsultationProvider prepareShowDoctorDiagnosis: $e');
+      }
+      return false;
+    }
   }
 
   Future<void> saveConsultUser() async {

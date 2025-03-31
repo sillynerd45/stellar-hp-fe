@@ -54,12 +54,8 @@ class BloodPressureLogSheet extends StatefulWidget {
     double buttonTopPadding = 32;
     double buttonHeight = 42;
     double totalSizedBoxHeight = _sizedBoxHeight * sizedBoxNumberInSheet;
-    double totalSheetHeight = kToolbarHeight +
-        containerHeight1 +
-        containerHeight2 +
-        buttonTopPadding +
-        buttonHeight +
-        totalSizedBoxHeight;
+    double totalSheetHeight =
+        kToolbarHeight + containerHeight1 + containerHeight2 + buttonTopPadding + buttonHeight + totalSizedBoxHeight;
 
     double recommendedChildSize = totalSheetHeight > heightWithoutSafeArea
         ? (heightWithoutSafeArea / displayHeight)
@@ -377,8 +373,7 @@ class _BloodPressureLogSheetState extends State<BloodPressureLogSheet> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         bool inProgress = context.read<MainProvider>().isHealthLogDecryptionInProgress;
         if (inProgress) {
-          MediDialog.aiFailureDialog(context,
-              message: "Decryption is in progress, please wait a minute");
+          MediDialog.aiFailureDialog(context, message: "Decryption is in progress, please wait a minute");
         } else {
           MediDialog.aiFailureDialog(context, message: "please try again");
         }
@@ -427,8 +422,7 @@ class _BloodPressureLogSheetState extends State<BloodPressureLogSheet> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         bool inProgress = context.read<MainProvider>().isHealthLogDecryptionInProgress;
         if (inProgress) {
-          MediDialog.aiFailureDialog(context,
-              message: "Decryption is in progress, please wait a minute");
+          MediDialog.aiFailureDialog(context, message: "Decryption is in progress, please wait a minute");
         } else {
           MediDialog.aiFailureDialog(context, message: "please try again");
         }

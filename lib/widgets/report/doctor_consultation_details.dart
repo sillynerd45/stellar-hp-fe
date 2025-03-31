@@ -87,32 +87,7 @@ class DoctorConsultationDetails extends StatelessWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () async {
-                  if (consultData is ConsultRequest) {
-                    String doctorRSA = await getIt<ConsultationProvider>()
-                        .acceptNewConsult(userHash: (consultData as ConsultRequest).fromUser);
-                    await getIt<HpConsultAccepted>().invoke(
-                      publicKey: getIt<UserIdService>().getPublicKey(),
-                      name: name,
-                      userHash: (consultData as ConsultRequest).fromUser,
-                      doctorHash: (consultData as ConsultRequest).toDoctor,
-                      doctorRSA: doctorRSA,
-                      dataPeriod: (consultData as ConsultRequest).dataPeriod,
-                      consultHash: (consultData as ConsultRequest).consultHash,
-                    );
-                  }
-
-                  if (consultData is ConsultData) {
-                    bool isSuccess = await getIt<ConsultationProvider>().prepareShowUserHealthLogs(
-                      name: name,
-                      userRSA: getIt<HashService>().addPemHeaders((consultData as ConsultData).userRsa),
-                      userHash: (consultData as ConsultData).fromUser,
-                      dataHash: (consultData as ConsultData).dataHash,
-                      consultHash: (consultData as ConsultData).consultHash,
-                      consult: consultData as ConsultData,
-                    );
-                    if (!context.mounted) return;
-                    if (isSuccess) context.pushReplacement(NavRoute.home);
-                  }
+                  doctorAction(context, name);
                 },
                 child: Container(
                   width: constraints.maxWidth,
@@ -148,5 +123,62 @@ class DoctorConsultationDetails extends StatelessWidget {
         ),
       );
     });
+  }
+
+  void doctorAction(BuildContext context, String name) async {
+    try {
+      // show waiting dialog
+      MediDialog.loading(context);
+
+      if (consultData is ConsultRequest) {
+        String doctorRSA =
+            await getIt<ConsultationProvider>().acceptNewConsult(userHash: (consultData as ConsultRequest).fromUser);
+        bool isSuccess = await getIt<HpConsultAccepted>().invoke(
+          publicKey: getIt<UserIdService>().getPublicKey(),
+          name: name,
+          userHash: (consultData as ConsultRequest).fromUser,
+          doctorHash: (consultData as ConsultRequest).toDoctor,
+          doctorRSA: doctorRSA,
+          dataPeriod: (consultData as ConsultRequest).dataPeriod,
+          consultHash: (consultData as ConsultRequest).consultHash,
+        );
+
+        if (!context.mounted) return;
+        Navigator.pop(context);
+
+        if (!isSuccess) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            MediDialog.aiFailureDialog(context, message: "please try again");
+          });
+        }
+        return;
+      }
+
+      if (consultData is ConsultData) {
+        bool isSuccess = await getIt<ConsultationProvider>().prepareShowUserHealthLogs(
+          name: name,
+          userRSA: getIt<HashService>().addPemHeaders((consultData as ConsultData).userRsa),
+          userHash: (consultData as ConsultData).fromUser,
+          dataHash: (consultData as ConsultData).dataHash,
+          consultHash: (consultData as ConsultData).consultHash,
+          consult: consultData as ConsultData,
+        );
+
+        if (!context.mounted) return;
+        Navigator.pop(context);
+
+        if (isSuccess) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          if (!context.mounted) return;
+          context.pushReplacement(NavRoute.home);
+        } else {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            MediDialog.aiFailureDialog(context, message: "please try again");
+          });
+        }
+      }
+    } catch (e) {
+      //
+    }
   }
 }
