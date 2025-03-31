@@ -16,11 +16,13 @@ class DoctorConsultationDetails extends StatelessWidget {
       String name = '-';
       String status = '-';
       String buttonTitle = '-';
+      bool allowButtonAction = false;
 
       if (consultData is ConsultRequest) {
         name = (consultData as ConsultRequest).name;
         status = 'Asking for Consultation';
         buttonTitle = 'Accept';
+        allowButtonAction = true;
       } else if (consultData is ConsultAccepted) {
         name = (consultData as ConsultAccepted).name;
         status = 'Waiting for Log Data';
@@ -29,6 +31,7 @@ class DoctorConsultationDetails extends StatelessWidget {
         name = (consultData as ConsultData).name;
         status = 'Data Available';
         buttonTitle = 'Open Health Logs';
+        allowButtonAction = true;
       } else if (consultData is ConsultResult) {
         name = (consultData as ConsultResult).name;
         status = 'Consultation Done';
@@ -87,6 +90,7 @@ class DoctorConsultationDetails extends StatelessWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () async {
+                  if (!allowButtonAction) return;
                   doctorAction(context, name);
                 },
                 child: Container(
