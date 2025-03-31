@@ -28,6 +28,10 @@ class MainProvider extends ChangeNotifier {
   bool isHealthLogDecryptionInProgress = false;
   bool isHealthReportDecryptionInProgress = false;
 
+  bool freshStart = true;
+
+  void setFreshStart() => freshStart = false;
+
   void setUserProfile(UserProfile? profile) {
     userProfile = profile;
   }

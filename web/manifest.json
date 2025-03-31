@@ -1,6 +1,6 @@
 {
-    "name": "stellar_hp_fe",
-    "short_name": "stellar_hp_fe",
+    "name": "Stellar Health Point",
+    "short_name": "Stellar Health Point",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

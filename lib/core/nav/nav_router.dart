@@ -95,6 +95,13 @@ final GoRouter appRouter = GoRouter(
   errorPageBuilder: (BuildContext context, GoRouterState state) {
     return customTransitionPage(state, const SplashScreen());
   },
+  redirect: (BuildContext context, GoRouterState state) async {
+    // check for fresh start or after refresh page
+    bool freshStart = getIt<MainProvider>().freshStart;
+    if (freshStart) return '/';
+
+    return null;
+  },
 );
 
 CustomTransitionPage<void> customTransitionPage(GoRouterState state, Widget screen) {

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart';
@@ -15,8 +17,19 @@ void main() async {
   runApp(const StellarHpApp());
 }
 
-class StellarHpApp extends StatelessWidget {
+class StellarHpApp extends StatefulWidget {
   const StellarHpApp({super.key});
+
+  @override
+  State<StellarHpApp> createState() => _StellarHpAppState();
+}
+
+class _StellarHpAppState extends State<StellarHpApp> {
+  @override
+  void initState() {
+    if (kIsWeb) BrowserContextMenu.disableContextMenu();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

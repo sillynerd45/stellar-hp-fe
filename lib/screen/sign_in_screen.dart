@@ -123,6 +123,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                     textInputAction: TextInputAction.done,
                                     textController: skController,
                                     keyboardType: TextInputType.text,
+                                    maxLines: 1,
+                                    obscureText: true,
                                   ),
                                 ),
                               ),

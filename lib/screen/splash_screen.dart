@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await precacheAppImage();
     await createDateList();
     if (!mounted) return;
-
+    getIt<MainProvider>().setFreshStart();
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     context.pushReplacement(NavRoute.signIn);
